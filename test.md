@@ -17,7 +17,7 @@
 ✻ Cooked for 1s
 
 ❯ make a virtual env                                                            
-
+a
   Listed 1 directory (ctrl+o to expand)
 
 ⏺ Bash(python3 -m venv venv)
