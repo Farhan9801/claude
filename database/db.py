@@ -82,3 +82,31 @@ def seed_db():
 
     conn.commit()
     conn.close()
+
+
+def get_user_by_email(email):
+    """Return the users row matching email, or None if there is no such user."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM users WHERE email = ?", (email,)
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def create_user(name, email, password):
+    """Create a user with a hashed password. Return the new user's id.
+
+    Raises sqlite3.IntegrityError if the email already exists (UNIQUE
+    constraint) — callers should handle it.
+    """
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            (name, email, generate_password_hash(password)),
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
