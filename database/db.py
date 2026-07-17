@@ -94,6 +94,40 @@ def get_user_by_email(email):
     return row
 
 
+def get_user_by_id(user_id):
+    """Return the users row matching id, or None if there is no such user."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM users WHERE id = ?", (user_id,)
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def get_expense_summary(user_id):
+    """Return {'count': int, 'total': float} for a user's expenses."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total "
+        "FROM expenses WHERE user_id = ?",
+        (user_id,),
+    ).fetchone()
+    conn.close()
+    return {"count": row["count"], "total": row["total"]}
+
+
+def get_expenses(user_id):
+    """Return all of a user's expenses, newest first."""
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, amount, category, date, description FROM expenses "
+        "WHERE user_id = ? ORDER BY date DESC, id DESC",
+        (user_id,),
+    ).fetchall()
+    conn.close()
+    return rows
+
+
 def create_user(name, email, password):
     """Create a user with a hashed password. Return the new user's id.
 

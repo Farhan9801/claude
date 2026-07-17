@@ -14,12 +14,20 @@
 
     <nav class="navbar">
         <div class="nav-inner">
+            {% if session.user_id %}
+            <span class="nav-brand nav-brand-static">
+                <span class="brand-icon">◈</span>
+                <span class="brand-name">Spendly</span>
+            </span>
+            {% else %}
             <a href="{{ url_for('landing') }}" class="nav-brand">
                 <span class="brand-icon">◈</span>
                 <span class="brand-name">Spendly</span>
             </a>
+            {% endif %}
             <div class="nav-links">
                 {% if session.user_id %}
+                <a href="{{ url_for('profile') }}">Profile</a>
                 <a href="{{ url_for('logout') }}">Log out</a>
                 {% else %}
                 <a href="{{ url_for('login') }}">Sign in</a>
