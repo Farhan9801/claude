@@ -77,6 +77,13 @@
     margin-bottom: 1.5rem;
 }
 
+.filter-controls {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
 .range-pills {
     display: inline-flex;
     background: var(--paper-warm);
@@ -85,6 +92,50 @@
     padding: 3px;
     gap: 2px;
 }
+
+.date-range {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.date-input {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.35rem 0.55rem;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.date-input:hover { border-color: var(--ink-faint); }
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+.date-range-sep {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+}
+
+.date-clear {
+    border: none;
+    background: transparent;
+    color: var(--ink-muted);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.2rem;
+}
+
+.date-clear:hover { color: var(--danger); }
+.date-clear[hidden] { display: none; }
 
 .pill {
     border: none;
@@ -114,6 +165,12 @@
     font-size: 0.85rem;
     color: var(--ink-muted);
 }
+
+/* The `display` rule above outranks the browser's [hidden]{display:none},
+   so restore hiding explicitly for elements toggled via the hidden attribute. */
+.active-filter[hidden],
+#donut-chart[hidden],
+.bar-chart[hidden] { display: none; }
 
 .active-filter-chip {
     display: inline-flex;
@@ -416,6 +473,49 @@
     height: 9px;
     border-radius: 50%;
     flex: 0 0 auto;
+}
+
+/* --- Filter transition animations --- */
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pop {
+    0%   { transform: scale(0.92); opacity: 0.4; }
+    60%  { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes donut-in {
+    from { opacity: 0; transform: rotate(-28deg) scale(0.88); }
+    to   { opacity: 1; transform: rotate(0deg) scale(1); }
+}
+
+/* Donut spins + scales in whenever the filtered set is redrawn. */
+#donut-chart.animate-in {
+    transform-origin: 50% 50%;
+    animation: donut-in 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Legend rows and table rows are rebuilt on every filter change, so the
+   animation replays automatically; JS staggers them via animation-delay. */
+.donut-legend .legend-item {
+    animation: fade-up 0.4s ease both;
+}
+
+.txn-table tbody tr {
+    animation: fade-up 0.35s ease both;
+}
+
+/* Stat numbers pop when their value is recomputed. */
+.stat-value.pop {
+    animation: pop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Active-category chip pops in when a category is selected. */
+.active-filter-chip.pop {
+    animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* --- Responsive --- */

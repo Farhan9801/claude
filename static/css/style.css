@@ -85,12 +85,32 @@ a { color: inherit; text-decoration: none; }
     color: var(--ink);
 }
 
+@keyframes brand-breathe {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50%      { transform: scale(1.15) rotate(8deg); }
+}
+
 .brand-icon {
     color: var(--accent);
     font-size: 1.3rem;
+    display: inline-block;
+    transform-origin: center;
+    animation: brand-breathe 3.6s ease-in-out infinite;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
-.brand-name { color: var(--ink); }
+.nav-brand:hover .brand-icon,
+.nav-brand-static:hover .brand-icon {
+    color: var(--accent-2);
+    text-shadow: 0 0 14px rgba(193, 127, 36, 0.55);
+}
+
+.brand-name {
+    color: var(--ink);
+    transition: letter-spacing 0.3s ease;
+}
+
+.nav-brand:hover .brand-name { letter-spacing: 0.02em; }
 
 .nav-links {
     display: flex;
@@ -645,4 +665,17 @@ a { color: inherit; text-decoration: none; }
     .hero-actions { flex-direction: column; width: 100%; }
     .hero-actions .btn-primary { width: 100%; text-align: center; }
     .mock-window { padding: 1.25rem; }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion — honour the OS "reduce motion" setting             */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
 }
