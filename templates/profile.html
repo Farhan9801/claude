@@ -23,11 +23,19 @@
 
         <!-- Filter bar -->
         <div class="filter-bar">
-            <div class="range-pills" id="range-pills" role="tablist" aria-label="Time range">
-                <button class="pill" data-range="1">1M</button>
-                <button class="pill" data-range="3">3M</button>
-                <button class="pill" data-range="6">6M</button>
-                <button class="pill is-active" data-range="all">All</button>
+            <div class="filter-controls">
+                <div class="range-pills" id="range-pills" role="tablist" aria-label="Time range">
+                    <button class="pill" data-range="1">1M</button>
+                    <button class="pill" data-range="3">3M</button>
+                    <button class="pill" data-range="6">6M</button>
+                    <button class="pill is-active" data-range="all">All</button>
+                </div>
+                <div class="date-range" id="date-range">
+                    <input type="date" class="date-input" id="date-from" aria-label="From date">
+                    <span class="date-range-sep">&rarr;</span>
+                    <input type="date" class="date-input" id="date-to" aria-label="To date">
+                    <button class="date-clear" id="date-clear" hidden aria-label="Clear date range">&times;</button>
+                </div>
             </div>
             <div class="active-filter" id="active-filter" hidden>
                 <span class="active-filter-label">Category:</span>

@@ -29,8 +29,10 @@
     });
 
     // ---- State ----
-    let rangeMonths = null;   // null = all time
+    let rangeMonths = null;   // null = all time (used when no custom range)
     let activeCategory = null; // null = all categories
+    let customFrom = null;    // Date (local midnight) or null
+    let customTo = null;      // Date (local midnight) or null
 
     // ---- Helpers ----
     const SVG_NS = "http://www.w3.org/2000/svg";
@@ -50,6 +52,40 @@
         return "₹" + Math.round(Number(n)).toLocaleString("en-IN");
     }
 
+    // Re-trigger a CSS animation on a persistent element by removing the
+    // class, forcing a reflow, then re-adding it.
+    function pulse(el, cls) {
+        if (!el) return;
+        el.classList.remove(cls);
+        void el.offsetWidth; // force reflow so the animation restarts
+        el.classList.add(cls);
+    }
+
+    // Parse a "YYYY-MM-DD" string (date-input value or expense date) into a
+    // local Date at midnight, so range comparisons are timezone-safe.
+    function toDay(val) {
+        if (!val) return null;
+        const s = String(val).slice(0, 10).split("-");
+        if (s.length !== 3) return null;
+        return new Date(Number(s[0]), Number(s[1]) - 1, Number(s[2]));
+    }
+
+    function customRangeActive() {
+        return customFrom !== null || customTo !== null;
+    }
+
+    // First-of-month for the earliest expense (fallback: current month).
+    function earliestExpenseMonth() {
+        const now = new Date();
+        if (ALL.length === 0) return new Date(now.getFullYear(), now.getMonth(), 1);
+        let earliest = now;
+        ALL.forEach(function (e) {
+            const d = toDay(e.date);
+            if (d && d < earliest) earliest = d;
+        });
+        return new Date(earliest.getFullYear(), earliest.getMonth(), 1);
+    }
+
     function rangeCutoff() {
         if (rangeMonths === null) return null;
         const d = new Date();
@@ -61,6 +97,16 @@
     // Set filtered by time only (used by the donut so it always shows the
     // full category split for the period).
     function timeFilteredSet() {
+        // An explicit from/to range overrides the month pills.
+        if (customRangeActive()) {
+            return ALL.filter(function (e) {
+                const d = toDay(e.date);
+                if (!d) return false;
+                if (customFrom && d < customFrom) return false;
+                if (customTo && d > customTo) return false;
+                return true;
+            });
+        }
         const cutoff = rangeCutoff();
         if (!cutoff) return ALL.slice();
         return ALL.filter(function (e) {
@@ -103,6 +149,10 @@
         document.getElementById("stat-count").textContent = String(count);
         document.getElementById("stat-avg").textContent = fmtCurrency(avg);
         document.getElementById("stat-top").textContent = count ? top : "—";
+
+        document.querySelectorAll(".stat-value").forEach(function (el) {
+            pulse(el, "pop");
+        });
     }
 
     function renderDonut(rows) {
@@ -164,12 +214,16 @@
             offset += len;
         });
 
+        // Spin + scale the whole donut in on every redraw.
+        pulse(svg, "animate-in");
+
         // Legend
-        segments.forEach(function (seg) {
+        segments.forEach(function (seg, i) {
             const frac = seg.value / total;
             const li = document.createElement("li");
             li.className = "legend-item"
                 + (activeCategory === seg.cat ? " is-active" : "");
+            li.style.animationDelay = (i * 0.04) + "s";
             li.addEventListener("click", function () { toggleCategory(seg.cat); });
 
             const sw = document.createElement("span");
@@ -201,34 +255,36 @@
         const empty = document.getElementById("bar-empty");
         chart.innerHTML = "";
 
-        // Decide which months to display.
+        // Decide the [startMonth, endMonth] window to display.
         const now = new Date();
         now.setDate(1);
         now.setHours(0, 0, 0, 0);
 
-        let monthsToShow;
-        if (rangeMonths !== null) {
-            monthsToShow = rangeMonths;
+        let startMonth, endMonth;
+        if (customRangeActive()) {
+            startMonth = customFrom
+                ? new Date(customFrom.getFullYear(), customFrom.getMonth(), 1)
+                : earliestExpenseMonth();
+            endMonth = customTo
+                ? new Date(customTo.getFullYear(), customTo.getMonth(), 1)
+                : now;
+        } else if (rangeMonths !== null) {
+            endMonth = now;
+            startMonth = new Date(now.getFullYear(), now.getMonth() - (rangeMonths - 1), 1);
         } else {
             // All-time: span from the earliest expense to now.
-            if (rows.length === 0) {
-                monthsToShow = 1;
-            } else {
-                let earliest = new Date();
-                ALL.forEach(function (e) {
-                    const d = new Date(e.date);
-                    if (d < earliest) earliest = d;
-                });
-                monthsToShow = (now.getFullYear() - earliest.getFullYear()) * 12
-                    + (now.getMonth() - earliest.getMonth()) + 1;
-            }
+            endMonth = now;
+            startMonth = rows.length ? earliestExpenseMonth() : now;
         }
+
+        let monthsToShow = (endMonth.getFullYear() - startMonth.getFullYear()) * 12
+            + (endMonth.getMonth() - startMonth.getMonth()) + 1;
         monthsToShow = Math.max(1, Math.min(monthsToShow, 24));
 
-        // Build the ordered list of month buckets.
+        // Build the ordered list of month buckets, ending at endMonth.
         const buckets = [];
         for (let i = monthsToShow - 1; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const d = new Date(endMonth.getFullYear(), endMonth.getMonth() - i, 1);
             const key = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
             buckets.push({ key: key, label: MONTH_NAMES[d.getMonth()], total: 0 });
         }
@@ -250,7 +306,7 @@
         empty.hidden = true;
         chart.hidden = false;
 
-        buckets.forEach(function (b) {
+        buckets.forEach(function (b, i) {
             const col = document.createElement("div");
             col.className = "bar-col";
 
@@ -259,7 +315,11 @@
 
             const fill = document.createElement("div");
             fill.className = "bar-fill";
-            fill.style.height = (max ? (b.total / max) * 100 : 0) + "%";
+            // Start collapsed; the CSS height transition animates the rise.
+            // Stagger via transition-delay (capped so long spans stay snappy).
+            fill.style.height = "0%";
+            fill.style.transitionDelay = (Math.min(i, 12) * 0.045) + "s";
+            fill.dataset.targetHeight = (max ? (b.total / max) * 100 : 0);
             if (b.total > 0) fill.setAttribute("data-value", fmtCompact(b.total));
 
             const label = document.createElement("div");
@@ -270,6 +330,13 @@
             col.appendChild(track);
             col.appendChild(label);
             chart.appendChild(col);
+        });
+
+        // Next frame: flip each bar to its target height so the transition runs.
+        requestAnimationFrame(function () {
+            chart.querySelectorAll(".bar-fill").forEach(function (fill) {
+                fill.style.height = fill.dataset.targetHeight + "%";
+            });
         });
     }
 
@@ -288,8 +355,10 @@
         empty.hidden = true;
 
         // rows already newest-first from the server.
-        rows.forEach(function (e) {
+        rows.forEach(function (e, i) {
             const tr = document.createElement("tr");
+            // Stagger the fade-up, capped so long lists don't drag on.
+            tr.style.animationDelay = (Math.min(i, 15) * 0.025) + "s";
 
             const dateTd = document.createElement("td");
             const d = new Date(e.date);
@@ -330,8 +399,10 @@
             nameEl.textContent = activeCategory;
             const dot = COLORS[activeCategory];
             nameEl.style.color = dot;
+            pulse(wrap.querySelector(".active-filter-chip"), "pop");
         } else {
             wrap.hidden = true;
+            nameEl.textContent = "";
         }
     }
 
@@ -351,7 +422,20 @@
         renderAll();
     }
 
+    const dateFrom = document.getElementById("date-from");
+    const dateTo = document.getElementById("date-to");
+    const dateClear = document.getElementById("date-clear");
+
+    function clearCustomRange() {
+        customFrom = null;
+        customTo = null;
+        dateFrom.value = "";
+        dateTo.value = "";
+        dateClear.hidden = true;
+    }
+
     function setRange(value) {
+        clearCustomRange();
         rangeMonths = (value === "all") ? null : parseInt(value, 10);
         const pills = document.querySelectorAll("#range-pills .pill");
         pills.forEach(function (p) {
@@ -360,10 +444,42 @@
         renderAll();
     }
 
+    function applyDateRange() {
+        customFrom = toDay(dateFrom.value);
+        customTo = toDay(dateTo.value);
+
+        // No dates left → fall back to the "All" pill.
+        if (!customRangeActive()) {
+            setRange("all");
+            return;
+        }
+
+        // Keep from <= to so the range always makes sense.
+        if (customFrom && customTo && customFrom > customTo) {
+            const td = customFrom; customFrom = customTo; customTo = td;
+            const tv = dateFrom.value; dateFrom.value = dateTo.value; dateTo.value = tv;
+        }
+
+        // An explicit range takes over from the month pills.
+        rangeMonths = null;
+        document.querySelectorAll("#range-pills .pill").forEach(function (p) {
+            p.classList.remove("is-active");
+        });
+        dateClear.hidden = false;
+        renderAll();
+    }
+
     document.querySelectorAll("#range-pills .pill").forEach(function (pill) {
         pill.addEventListener("click", function () {
             setRange(pill.getAttribute("data-range"));
         });
+    });
+
+    dateFrom.addEventListener("change", applyDateRange);
+    dateTo.addEventListener("change", applyDateRange);
+    dateClear.addEventListener("click", function () {
+        clearCustomRange();
+        setRange("all");
     });
 
     document.getElementById("active-filter-clear").addEventListener("click", function () {
