@@ -106,17 +106,20 @@ def profile():
     if user_id is None:
         return redirect(url_for("login"))
 
-    user = get_user_by_id(user_id)
-    if user is None:
+    user_row = get_user_by_id(user_id)
+    if user_row is None:
         # Stale session: id points at a user that no longer exists.
         session.clear()
         return redirect(url_for("login"))
 
     member_since = datetime.strptime(
-        user["created_at"], "%Y-%m-%d %H:%M:%S"
+        user_row["created_at"], "%Y-%m-%d %H:%M:%S"
     ).strftime("%B %d, %Y")
     summary = get_expense_summary(user_id)
     expenses = [dict(row) for row in get_expenses(user_id)]
+
+    # Only safe fields reach the template — never the password hash.
+    user = {"name": user_row["name"], "email": user_row["email"]}
 
     return render_template(
         "profile.html",
