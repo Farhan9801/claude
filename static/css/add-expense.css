@@ -1,0 +1,14 @@
+/* Add Expense — page-specific styles.
+   Only the deltas the shared .form-input rules don't cover. */
+
+select.form-input {
+    appearance: none;
+    background-color: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.form-optional {
+    color: var(--ink-faint);
+    font-weight: 400;
+}
