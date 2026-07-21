@@ -97,7 +97,7 @@ pytest -s
 | `GET, POST /login` | Implemented — GET renders form, POST authenticates |
 | `GET /logout` | Implemented — clears session, redirects to `/login` |
 | `GET /profile` | Implemented — session-protected, renders `profile.html` with expense data |
-| `GET /expenses/add` | Stub — Step 7 |
+| `GET, POST /expenses/add` | Implemented — session-protected, renders `add_expense.html`, creates an expense |
 | `GET /expenses/<id>/edit` | Stub — Step 8 |
 | `GET /expenses/<id>/delete` | Stub — Step 9 |
 

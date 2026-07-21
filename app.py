@@ -13,10 +13,16 @@ from database.db import (
     get_expense_summary,
     get_expenses,
     create_user,
+    create_expense,
 )
 
 app = Flask(__name__)
 app.secret_key = "spendly-dev-secret-key-change-in-production"
+
+# The canonical expense categories — single source of truth for both the
+# add-expense form and its server-side validation.
+CATEGORIES = ["Food", "Transport", "Bills", "Health",
+              "Entertainment", "Shopping", "Other"]
 
 # Ensure the database exists and is seeded before any request is handled.
 with app.app_context():
@@ -130,9 +136,53 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
 def add_expense():
-    return "Add expense — coming in Step 7"
+    user_id = session.get("user_id")
+    if user_id is None:
+        return redirect(url_for("login"))
+
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    if request.method == "POST":
+        amount_raw = request.form.get("amount", "").strip()
+        category = request.form.get("category", "").strip()
+        date = request.form.get("date", "").strip()
+        description = request.form.get("description", "").strip()
+
+        try:
+            amount = float(amount_raw)
+        except ValueError:
+            amount = None
+
+        error = None
+        if amount is None or amount <= 0:
+            error = "Amount must be a number greater than zero."
+        elif category not in CATEGORIES:
+            error = "Please choose a valid category."
+        else:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                error = "Please enter a valid date."
+
+        if error:
+            return render_template(
+                "add_expense.html",
+                error=error,
+                categories=CATEGORIES,
+                amount=amount_raw,
+                category=category,
+                date=date or today,
+                description=description,
+            )
+
+        # user_id comes only from the session — never from the form, so a user
+        # can only add expenses for themselves.
+        create_expense(user_id, amount, category, date, description or None)
+        return redirect(url_for("profile"))
+
+    return render_template("add_expense.html", categories=CATEGORIES, date=today)
 
 
 @app.route("/expenses/<int:id>/edit")
