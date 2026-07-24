@@ -162,3 +162,37 @@ def create_expense(user_id, amount, category, date, description):
         return cursor.lastrowid
     finally:
         conn.close()
+
+
+def get_expense_by_id(expense_id, user_id):
+    """Return one expense owned by user_id, or None.
+
+    Scoped by both id and user_id so a user can only fetch their own expense.
+    """
+    conn = get_db()
+    row = conn.execute(
+        "SELECT id, amount, category, date, description FROM expenses "
+        "WHERE id = ? AND user_id = ?",
+        (expense_id, user_id),
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def update_expense(expense_id, user_id, amount, category, date, description):
+    """Update one expense owned by user_id and return rows changed (0 if not owned).
+
+    Never touches id, user_id, or created_at. The WHERE ... AND user_id = ?
+    clause is a second ownership guard.
+    """
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? "
+            "WHERE id = ? AND user_id = ?",
+            (amount, category, date, description, expense_id, user_id),
+        )
+        conn.commit()
+        return cursor.rowcount
+    finally:
+        conn.close()
