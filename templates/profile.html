@@ -99,9 +99,10 @@
                             <th>Category</th>
                             <th>Description</th>
                             <th class="txn-amount-col">Amount</th>
+                            <th class="txn-actions-col">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="txn-body"></tbody>
+                    <tbody id="txn-body" data-edit-url="{{ url_for('edit_expense', id=0) }}"></tbody>
                 </table>
             </div>
             <p class="chart-empty" id="txn-empty" hidden>No transactions match these filters.</p>

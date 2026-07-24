@@ -344,6 +344,8 @@
         const body = document.getElementById("txn-body");
         const empty = document.getElementById("txn-empty");
         const countEl = document.getElementById("txn-count");
+        // Server-injected URL template, e.g. "/expenses/0/edit"; swap the id per row.
+        const editUrlTemplate = body.dataset.editUrl;
         body.innerHTML = "";
 
         countEl.textContent = rows.length ? "(" + rows.length + ")" : "";
@@ -383,10 +385,19 @@
             amtTd.className = "txn-amount";
             amtTd.textContent = fmtCurrency(e.amount);
 
+            const actionTd = document.createElement("td");
+            actionTd.className = "txn-actions";
+            const editLink = document.createElement("a");
+            editLink.className = "txn-edit-link";
+            editLink.href = editUrlTemplate.replace("/0/", "/" + e.id + "/");
+            editLink.textContent = "Edit";
+            actionTd.appendChild(editLink);
+
             tr.appendChild(dateTd);
             tr.appendChild(catTd);
             tr.appendChild(descTd);
             tr.appendChild(amtTd);
+            tr.appendChild(actionTd);
             body.appendChild(tr);
         });
     }
