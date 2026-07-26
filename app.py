@@ -16,6 +16,7 @@ from database.db import (
     create_expense,
     get_expense_by_id,
     update_expense,
+    delete_expense_by_id,
 )
 
 app = Flask(__name__)
@@ -247,9 +248,33 @@ def edit_expense(id):
     )
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["GET", "POST"])
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    user_id = session.get("user_id")
+    if user_id is None:
+        return redirect(url_for("login"))
+
+    expense = get_expense_by_id(id, user_id)
+    if expense is None:
+        abort(404)
+
+    if request.method == "POST":
+        # user_id comes only from the session — never from the form — so a user
+        # can only delete their own expenses. The helper's AND user_id = ? is a
+        # second ownership guard behind the fetch above.
+        delete_expense_by_id(id, user_id)
+        return redirect(url_for("profile"))
+
+    return render_template(
+        "delete_expense.html",
+        expense_id=id,
+        amount=expense["amount"],
+        category=expense["category"],
+        date_display=datetime.strptime(
+            expense["date"], "%Y-%m-%d"
+        ).strftime("%d %b %Y"),
+        description=expense["description"],
+    )
 
 
 if __name__ == "__main__":

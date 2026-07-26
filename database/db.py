@@ -196,3 +196,23 @@ def update_expense(expense_id, user_id, amount, category, date, description):
         return cursor.rowcount
     finally:
         conn.close()
+
+
+def delete_expense_by_id(expense_id, user_id):
+    """Delete one expense owned by user_id and return rows deleted (0 if not owned).
+
+    Named *_by_id, not delete_expense, because delete_expense is the route
+    function name in app.py — importing a same-named helper would shadow it.
+    The WHERE ... AND user_id = ? clause is a second ownership guard behind the
+    route's get_expense_by_id check, and guarantees at most one row is removed.
+    """
+    conn = get_db()
+    try:
+        cursor = conn.execute(
+            "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+            (expense_id, user_id),
+        )
+        conn.commit()
+        return cursor.rowcount
+    finally:
+        conn.close()

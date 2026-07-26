@@ -99,7 +99,7 @@ pytest -s
 | `GET /profile` | Implemented — session-protected, renders `profile.html` with expense data |
 | `GET, POST /expenses/add` | Implemented — session-protected, renders `add_expense.html`, creates an expense |
 | `GET, POST /expenses/<id>/edit` | Implemented — session-protected, renders `edit_expense.html`, updates an expense |
-| `GET /expenses/<id>/delete` | Stub — Step 9 |
+| `GET, POST /expenses/<id>/delete` | Implemented — session-protected, GET renders `delete_expense.html` confirmation, POST deletes an expense |
 
 **Do not implement a stub route unless the active task explicitly targets that step.**
 

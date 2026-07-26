@@ -344,8 +344,9 @@
         const body = document.getElementById("txn-body");
         const empty = document.getElementById("txn-empty");
         const countEl = document.getElementById("txn-count");
-        // Server-injected URL template, e.g. "/expenses/0/edit"; swap the id per row.
+        // Server-injected URL templates, e.g. "/expenses/0/edit"; swap the id per row.
         const editUrlTemplate = body.dataset.editUrl;
+        const deleteUrlTemplate = body.dataset.deleteUrl;
         body.innerHTML = "";
 
         countEl.textContent = rows.length ? "(" + rows.length + ")" : "";
@@ -392,6 +393,11 @@
             editLink.href = editUrlTemplate.replace("/0/", "/" + e.id + "/");
             editLink.textContent = "Edit";
             actionTd.appendChild(editLink);
+            const deleteLink = document.createElement("a");
+            deleteLink.className = "txn-delete-link";
+            deleteLink.href = deleteUrlTemplate.replace("/0/", "/" + e.id + "/");
+            deleteLink.textContent = "Delete";
+            actionTd.appendChild(deleteLink);
 
             tr.appendChild(dateTd);
             tr.appendChild(catTd);

@@ -1,0 +1,49 @@
+/* Delete Expense — page-specific styles.
+   Only the deltas style.css doesn't cover: a destructive submit button and
+   the read-only expense summary block. Variables only, no hex. */
+
+/* Compound selector on purpose: style.css has
+   `.btn-submit:hover { background: var(--accent); }`, so a bare `.btn-danger:hover`
+   would lose the specificity contest and the delete button would turn green on
+   hover. `.btn-submit.btn-danger` outranks it. */
+.btn-submit.btn-danger { background: var(--danger); }
+.btn-submit.btn-danger:hover { background: var(--danger); filter: brightness(0.92); }
+
+.delete-summary {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.delete-summary-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.45rem 0;
+}
+
+.delete-summary-row + .delete-summary-row { border-top: 1px solid var(--border-soft); }
+
+.delete-summary-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+}
+
+.delete-summary-value {
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    text-align: right;
+    word-break: break-word;
+}
+
+.delete-summary-amount {
+    color: var(--ink);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}

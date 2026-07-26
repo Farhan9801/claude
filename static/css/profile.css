@@ -461,13 +461,20 @@
 }
 
 .txn-actions-col { text-align: right; }
-.txn-actions { text-align: right; }
+.txn-actions { text-align: right; white-space: nowrap; }
 .txn-edit-link {
     color: var(--accent);
     font-weight: 500;
     text-decoration: none;
 }
 .txn-edit-link:hover { text-decoration: underline; }
+.txn-delete-link {
+    color: var(--danger);
+    font-weight: 500;
+    text-decoration: none;
+    margin-left: 0.75rem;
+}
+.txn-delete-link:hover { text-decoration: underline; }
 
 .cat-tag {
     display: inline-flex;
